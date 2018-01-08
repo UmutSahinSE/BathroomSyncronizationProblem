@@ -27,12 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     person.cpp \
-    man.cpp
+    man.cpp \
+    woman.cpp
 
 HEADERS += \
         mainwindow.h \
     person.h \
-    man.h
+    man.h \
+    woman.h
 
 FORMS += \
         mainwindow.ui

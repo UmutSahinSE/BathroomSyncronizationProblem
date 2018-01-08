@@ -1,25 +1,25 @@
-#include "man.h"
+#include "woman.h"
 
-QMutex Man::initiatorMutex;
-QMutex Man::leaverMutex;
-int Man::entered=0;
-int Man::insideBathroom=0;
+QMutex Woman::initiatorMutex;
+QMutex Woman::leaverMutex;
+int Woman::entered=0;
+int Woman::insideBathroom=0;
 
-Man::Man()
+Woman::Woman()
 {
     connect(timeInBathroom,SIGNAL(timeout()),this,SLOT(leaveBathroom()));
 }
-void Man::attemptEnter()
+void Woman::attemptEnter()
 {
     initiatorMutex.lock();
     if(entered==0)
     {
         manOrWomanMutex.lock();
-        emit manTurn();
+        emit womanTurn();
         ++entered;
         ++insideBathroom;
-        emit setInsideMan(insideBathroom);
-        emit manWaitDecrease();
+        emit setInsideWoman(insideBathroom);
+        emit womanWaitDecrease();
         timeInBathroom->start();
         initiatorMutex.unlock();
     }
@@ -27,8 +27,8 @@ void Man::attemptEnter()
     {
         ++entered;
         ++insideBathroom;
-        emit setInsideMan(insideBathroom);
-        emit manWaitDecrease();
+        emit setInsideWoman(insideBathroom);
+        emit womanWaitDecrease();
         timeInBathroom->start();
         initiatorMutex.unlock();
     }
@@ -36,17 +36,17 @@ void Man::attemptEnter()
     {
         ++entered;
         ++insideBathroom;
-        emit setInsideMan(insideBathroom);
-        emit manWaitDecrease();
+        emit setInsideWoman(insideBathroom);
+        emit womanWaitDecrease();
         timeInBathroom->start();
     }
 }
 
-void Man::leaveBathroom()
+void Woman::leaveBathroom()
 {
     leaverMutex.lock();
     --insideBathroom;
-    emit setInsideMan(insideBathroom);
+    emit setInsideWoman(insideBathroom);
     if(insideBathroom==0)
     {
         entered=0;
@@ -54,7 +54,7 @@ void Man::leaveBathroom()
         emit empty();
         initiatorMutex.unlock();
     }
-    emit manLeft();
+    emit womanLeft();
     leaverMutex.unlock();
     emit done();
 }

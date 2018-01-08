@@ -1,10 +1,10 @@
-#ifndef MAN_H
-#define MAN_H
+#ifndef WOMAN_H
+#define WOMAN_H
 
 #include <QObject>
 #include <person.h>
 
-class Man : public Person
+class Woman : public Person
 {
     Q_OBJECT
 public:
@@ -12,15 +12,15 @@ public:
     static QMutex leaverMutex;
     static int entered;
     static int insideBathroom;
-    Man();
+    Woman();
 public slots:
     void attemptEnter();
     void leaveBathroom();
 signals:
-    void setInsideMan(int newInside);
-    void manLeft();
-    void manWaitDecrease();
-    void manTurn();
+    void setInsideWoman(int newInside);
+    void womanLeft();
+    void womanWaitDecrease();
+    void womanTurn();
 };
 
 #endif // MAN_H

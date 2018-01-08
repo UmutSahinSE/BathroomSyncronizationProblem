@@ -18,9 +18,8 @@ private:
     int manWaiting;
     int manLeftcount;
     int womanLeftCount;
-    int finishedThreadCount;
-    QTimer manSpawnTimer;
-    QTimer womanSpawnTimer;
+    QTimer SpawnTimer;
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -34,6 +33,12 @@ public slots:
     void setManInside(int newManInside);
     void manLeft();
     void manWaitDecrease();
+    void setWomanInside(int newWomanInside);
+    void womanLeft();
+    void womanWaitDecrease();
+    void manTurn();
+    void womanTurn();
+    void emptyTurn();
 private slots:
     void on_ManSpawnSpinbox_valueChanged(int newRate);
     void on_WomanSpawnSpinbox_valueChanged(int newRate);

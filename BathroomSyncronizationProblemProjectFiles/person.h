@@ -17,6 +17,7 @@ public:
     void moveTimerToThread();
 signals:
     void done();
+    void empty();
 public slots:
     virtual void attemptEnter()=0;
     virtual void leaveBathroom()=0;

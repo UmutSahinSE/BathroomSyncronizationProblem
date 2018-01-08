@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QThread>
-#include <QThreadPool>
 #include "man.h"
+#include "woman.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -13,9 +13,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QPalette *background_color=new QPalette;
     background_color->setColor(QPalette::Window, Qt::blue);
     ui->ManWaitingLabel->setPalette(*background_color);
-    //color other counters
+    ui->manInsideLabel->setPalette(*background_color);
+    ui->manLeftLabel->setPalette(*background_color);
     background_color->setColor(QPalette::Window, Qt::magenta);
     ui->WomanWaitingLabel->setPalette(*background_color);
+    ui->womanInsideLabel->setPalette(*background_color);
+    ui->womanLeftLabel->setPalette(*background_color);
     background_color->setColor(QPalette::Window, Qt::black);
     ui->bathroomDivider->setPalette(*background_color);
     delete background_color;
@@ -26,17 +29,13 @@ MainWindow::MainWindow(QWidget *parent) :
     manSpawnRate=0;
     manLeftcount=0;
     womanLeftCount=0;
-    finishedThreadCount=0;
 
-    manSpawnTimer.setInterval(1000);
-    womanSpawnTimer.setInterval(1000);
-    manSpawnTimer.setSingleShot(false);
-    womanSpawnTimer.setSingleShot(false);
-    manSpawnTimer.start();
-    womanSpawnTimer.start();
+    SpawnTimer.setInterval(1000);
+    SpawnTimer.setSingleShot(false);
+    SpawnTimer.start();
 
-    connect(&manSpawnTimer,SIGNAL(timeout()),this,SLOT(spawnWaitingMan()));
-    connect(&womanSpawnTimer,SIGNAL(timeout()),this,SLOT(spawnWaitingWoman()));
+    connect(&SpawnTimer,SIGNAL(timeout()),this,SLOT(spawnWaitingMan()));
+    connect(&SpawnTimer,SIGNAL(timeout()),this,SLOT(spawnWaitingWoman()));
 }
 
 MainWindow::~MainWindow()
@@ -46,15 +45,55 @@ MainWindow::~MainWindow()
 
 void MainWindow::spawnWaitingWoman()
 {
-    womanWaiting+=womanSpawnRate;
-    ui->WomanWaitingLabel->setText(QString::number(womanWaiting));
+    if(womanWaiting+womanSpawnRate>30)
+    {
+        for(int counter=0;counter<30-womanWaiting;counter++)
+        {
+            QThread* newThread=new QThread;
+            Woman* newWoman=new Woman;
+            newWoman->moveToThread(newThread);
+            newWoman->moveTimerToThread();
+            connect(newThread,SIGNAL(started()),newWoman,SLOT(attemptEnter()));
+            connect(newThread,SIGNAL(finished()),newWoman,SLOT(deleteLater()));
+            connect(newWoman,SIGNAL(done()),newThread,SLOT(quit()));
+            connect(newWoman,SIGNAL(setInsideWoman(int)),this,SLOT(setWomanInside(int)));
+            connect(newWoman,SIGNAL(womanLeft()),this,SLOT(womanLeft()));
+            connect(newWoman,SIGNAL(womanWaitDecrease()),this,SLOT(womanWaitDecrease()));
+            connect(newWoman,SIGNAL(empty()),this,SLOT(emptyTurn()));
+            connect(newWoman,SIGNAL(womanTurn()),this,SLOT(womanTurn()));
+            newThread->start();
+        }
+        womanWaiting=30;
+        ui->WomanWaitingLabel->setText(QString::number(womanWaiting));
+    }
+    else if(womanSpawnRate>0)
+    {
+        for(int counter=0;counter<womanSpawnRate;counter++)
+        {
+            QThread* newThread=new QThread;
+            Woman* newWoman=new Woman;
+            newWoman->moveToThread(newThread);
+            newWoman->moveTimerToThread();
+            connect(newThread,SIGNAL(started()),newWoman,SLOT(attemptEnter()));
+            connect(newThread,SIGNAL(finished()),newWoman,SLOT(deleteLater()));
+            connect(newWoman,SIGNAL(done()),newThread,SLOT(quit()));
+            connect(newWoman,SIGNAL(setInsideWoman(int)),this,SLOT(setWomanInside(int)));
+            connect(newWoman,SIGNAL(womanLeft()),this,SLOT(womanLeft()));
+            connect(newWoman,SIGNAL(womanWaitDecrease()),this,SLOT(womanWaitDecrease()));
+            connect(newWoman,SIGNAL(empty()),this,SLOT(emptyTurn()));
+            connect(newWoman,SIGNAL(womanTurn()),this,SLOT(womanTurn()));
+            newThread->start();
+        }
+        womanWaiting+=womanSpawnRate;
+        ui->WomanWaitingLabel->setText(QString::number(womanWaiting));
+    }
 }
 
 void MainWindow::spawnWaitingMan()
 {
     if(manWaiting+manSpawnRate>30)
     {
-        for(int counter=0;counter<manWaiting+manSpawnRate-30;counter++)
+        for(int counter=0;counter<30-manWaiting;counter++)
         {
             QThread* newThread=new QThread;
             Man* newMan=new Man;
@@ -62,10 +101,12 @@ void MainWindow::spawnWaitingMan()
             newMan->moveTimerToThread();
             connect(newThread,SIGNAL(started()),newMan,SLOT(attemptEnter()));
             connect(newThread,SIGNAL(finished()),newMan,SLOT(deleteLater()));
-            connect(newMan,SIGNAL(destroyed(QObject*)),newThread,SLOT(terminate()));
+            connect(newMan,SIGNAL(done()),newThread,SLOT(quit()));
             connect(newMan,SIGNAL(setInsideMan(int)),this,SLOT(setManInside(int)));
             connect(newMan,SIGNAL(manLeft()),this,SLOT(manLeft()));
             connect(newMan,SIGNAL(manWaitDecrease()),this,SLOT(manWaitDecrease()));
+            connect(newMan,SIGNAL(empty()),this,SLOT(emptyTurn()));
+            connect(newMan,SIGNAL(manTurn()),this,SLOT(manTurn()));
             newThread->start();
         }
         manWaiting=30;
@@ -85,12 +126,13 @@ void MainWindow::spawnWaitingMan()
             connect(newMan,SIGNAL(setInsideMan(int)),this,SLOT(setManInside(int)));
             connect(newMan,SIGNAL(manLeft()),this,SLOT(manLeft()));
             connect(newMan,SIGNAL(manWaitDecrease()),this,SLOT(manWaitDecrease()));
+            connect(newMan,SIGNAL(empty()),this,SLOT(emptyTurn()));
+            connect(newMan,SIGNAL(manTurn()),this,SLOT(manTurn()));
             newThread->start();
         }
         manWaiting+=manSpawnRate;
         ui->ManWaitingLabel->setText(QString::number(manWaiting));
     }
-
 }
 
 void MainWindow::on_ManSpawnSpinbox_valueChanged(int newRate)
@@ -119,4 +161,43 @@ void MainWindow::manWaitDecrease()
     --manWaiting;
     ui->ManWaitingLabel->setText(QString::number(manWaiting));
 }
+void MainWindow::setWomanInside(int newWomanInside)
+{
+    ui->womanInsideLabel->setText(QString::number(newWomanInside));
+}
 
+void MainWindow::womanLeft()
+{
+    ui->womanLeftLabel->setText(QString::number(++womanLeftCount));
+}
+
+void MainWindow::womanWaitDecrease()
+{
+    if(womanWaiting>0)
+    --womanWaiting;
+    ui->WomanWaitingLabel->setText(QString::number(womanWaiting));
+}
+
+void MainWindow::manTurn()
+{
+    QPalette *background_color=new QPalette;
+    background_color->setColor(QPalette::Window, Qt::blue);
+    ui->TurnLabel->setPalette(*background_color);
+    delete background_color;
+}
+
+void MainWindow::womanTurn()
+{
+    QPalette *background_color=new QPalette;
+    background_color->setColor(QPalette::Window, Qt::magenta);
+    ui->TurnLabel->setPalette(*background_color);
+    delete background_color;
+}
+
+void MainWindow::emptyTurn()
+{
+    QPalette *background_color=new QPalette;
+    background_color->setColor(QPalette::Window, Qt::gray);
+    ui->TurnLabel->setPalette(*background_color);
+    delete background_color;
+}
