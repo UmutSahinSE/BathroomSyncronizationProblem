@@ -14,6 +14,7 @@ protected:
 
 public:
     explicit Person(QObject *parent = nullptr);
+    ~Person();
     void moveTimerToThread();
 signals:
     void done();

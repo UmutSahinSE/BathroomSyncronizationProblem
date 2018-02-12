@@ -10,6 +10,11 @@ Person::Person(QObject *parent) : QObject(parent)
 
 }
 
+Person::~Person()
+{
+    delete timeInBathroom;
+}
+
 void Person::moveTimerToThread()
 {
     timeInBathroom->moveToThread(this->thread());
